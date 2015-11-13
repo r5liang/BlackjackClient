@@ -135,7 +135,7 @@ public class Player {
         // If you're reading this, congratulations! You've found an easter egg!
         // When registering your player name, use a name that contains any of these strings and you get 150 more chips.
         // Also, my team came up with some of these, hence so many cat references.
-        String[] easterEggNames = new String[] {"nyan cat", "john cena", "numa numa", "doge", "↑↑↓↓←→←→ⒷⒶStart",
+        String[] easterEggNames = new String[] {"nyan cat", "john cena", "numa numa", "doge", "dsfastart",
                 "right meow", "grumpy cat", "queen of blades", "super mario", "ash ketchum", "inigo montoya"};
         return Stream.of(easterEggNames).filter(name.toLowerCase()::contains).count() > 0;
     }

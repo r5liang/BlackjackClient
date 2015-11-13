@@ -1,6 +1,9 @@
 package com.lactaoen.blackjack.client;
 
 import com.lactaoen.blackjack.model.Action;
+import com.lactaoen.blackjack.model.Card;
+import com.lactaoen.blackjack.model.Hand;
+import com.lactaoen.blackjack.model.Player;
 import com.lactaoen.blackjack.model.PlayerInfo;
 import com.lactaoen.blackjack.model.Round;
 import com.lactaoen.blackjack.model.wrapper.ActionWrapper;
@@ -12,6 +15,8 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.lang.reflect.Type;
 
 /**
@@ -24,6 +29,7 @@ public class BlackjackFrameHandler implements StompFrameHandler {
 
     private StompSession session;
     private String playerId;
+    private int seatNumIndex;
 
     public BlackjackFrameHandler(StompSession session) {
         this.session = session;
@@ -57,6 +63,7 @@ public class BlackjackFrameHandler implements StompFrameHandler {
             // After we get the playerId, you'll probably want to check if we can bet.
             // If so, you could do that here.
             // TODO Add custom implementation below for variable bet sizes.
+            seatNumIndex = ((PlayerInfo)o).getSeatNum() - 1;
             session.send("/app/bet", new BetWrapper(playerId, 100));
 
         } else if (o.getClass() == BlackjackErrorWrapper.class) {
@@ -71,15 +78,46 @@ public class BlackjackFrameHandler implements StompFrameHandler {
             // a hand action here.
 
             GameInfoWrapper game = (GameInfoWrapper) o;
-
+            
+            
+//game.getPlayers().get(seatNumIndex).getHands().get()
             if (game.getGameStatus() == Round.BETTING_ROUND) {
                 session.send("/app/bet", new BetWrapper(playerId, 100));
 
             } else if(game.getGameStatus() == Round.HAND_IN_PROGRESS) {
 
-                // TODO Change the action being sent to be based off your current hand.
-                ActionWrapper actionWrapper = new ActionWrapper(playerId, 0, Action.STAND);
-
+                // TODO Change the action being sent to be based off your current hand.           	
+                ActionWrapper actionWrapper;
+            	//game.getPlayers().get(seatNumIndex);
+                
+                int currSum = 0;
+                //ArrayList<Integer> otherPlayerSums = new ArrayList<Integer>(game.getPlayers().size() - 1]);
+                for (int i = 0; i < game.getPlayers().size(); i++) {
+                	Player curr = game.getPlayers().get(i);
+                	Hand currHand = curr.getHands().get(curr.getHands().size() - 1);
+                	List<Card> cards = currHand.getCards();
+                	if (i == seatNumIndex) {
+                		for (int j = 0; j < cards.size(); j++) {
+                        	currSum += cards.get(j).getRank().getValue();
+                		}
+                	} else {
+                		int tempOtherSum = 0;
+                		for (int j = 0; j < cards.size(); j++) {
+                        	tempOtherSum += cards.get(j).getRank().getValue();
+                		}
+                		//otherPlayerSums.add(tempOtherSum);
+                	}
+                }
+                
+                
+                
+                
+            	if (currSum > 13) { // The average card value is about 7.3, so hitting after 14 has a higher risk of going bust.
+            		actionWrapper = new ActionWrapper(playerId, 0, Action.STAND);
+            	} else {
+            		actionWrapper = new ActionWrapper(playerId, 0, Action.HIT);
+;            	}
+            	
                 session.send("/app/action", actionWrapper);
             }
 
